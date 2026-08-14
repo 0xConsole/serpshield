@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SerpShield — AI Threat Intelligence from Real-Time Search Data</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0a0e1a; color: #e0e6f0; min-height: 100vh;
+}
+.header {
+  background: linear-gradient(135deg, #0d1117 0%, #161b26 100%);
+  border-bottom: 1px solid #1f2a3c; padding: 24px 40px;
+}
+.header h1 {
+  font-size: 28px; color: #58a6ff; margin-bottom: 4px;
+}
+.header h1 .shield { color: #f0883e; }
+.header .tagline { color: #8b949e; font-size: 14px; }
+.badges { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.badge {
+  background: #161b26; border: 1px solid #1f2a3c; border-radius: 6px;
+  padding: 4px 12px; font-size: 12px; color: #8b949e;
+}
+.badge.live { color: #3fb950; border-color: #2ea043; }
+.badge.demo { color: #f0883e; border-color: #db6d28; }
+.badge.serpapi { color: #58a6ff; border-color: #388bfd; }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 30px 40px; }
+
+.section { margin-bottom: 30px; }
+.section h2 { font-size: 18px; color: #c9d1d9; margin-bottom: 16px; }
+
+.status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.stat-card {
+  background: #0d1117; border: 1px solid #1f2a3c; border-radius: 8px; padding: 16px;
+}
+.stat-card .label { font-size: 12px; color: #8b949e; margin-bottom: 8px; }
+.stat-card .value { font-size: 24px; font-weight: bold; }
+
+.threat-score { color: #f85149; }
+.threat-score.medium { color: #f0883e; }
+.threat-score.low { color: #3fb950; }
+
+.btn {
+  background: #238636; color: white; border: none; padding: 10px 20px;
+  border-radius: 6px; cursor: pointer; font-size: 14px; transition: background 0.2s;
+}
+.btn:hover { background: #2ea043; }
+.btn:disabled { background: #21262d; color: #8b949e; cursor: not-allowed; }
+
+.input-group { display: flex; gap: 12px; margin-bottom: 20px; }
+.input-group input {
+  flex: 1; background: #0d1117; border: 1px solid #1f2a3c; border-radius: 6px;
+  padding: 10px 16px; color: #e0e6f0; font-size: 14px;
+}
+.input-group input::placeholder { color: #484f58; }
+
+.results { display: flex; flex-direction: column; gap: 12px; }
+.signal-card {
+  background: #0d1117; border: 1px solid #1f2a3c; border-radius: 8px; padding: 16px;
+}
+.signal-card .header-line { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.signal-card .type { font-size: 12px; font-weight: bold; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; }
+.type-critical { background: #4a0e0e; color: #f85149; }
+.type-high { background: #4a2a0e; color: #f0883e; }
+.type-medium { background: #3d3a0e; color: #d29922; }
+.type-low { background: #0e2a4a; color: #58a6ff; }
+.type-info { background: #1f2a3c; color: #8b949e; }
+.signal-card .title { font-size: 15px; color: #c9d1d9; margin-bottom: 6px; }
+.signal-card .snippet { font-size: 13px; color: #8b949e; line-height: 1.5; }
+.signal-card .url { font-size: 12px; color: #58a6ff; margin-top: 8px; word-break: break-all; }
+
+.tools-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.tool-card {
+  background: #0d1117; border: 1px solid #1f2a3c; border-radius: 8px; padding: 14px;
+}
+.tool-card .name { color: #58a6ff; font-size: 14px; font-weight: bold; margin-bottom: 4px; }
+.tool-card .desc { color: #8b949e; font-size: 13px; }
+.tool-card .endpoint { color: #484f58; font-size: 11px; margin-top: 6px; font-family: monospace; }
+
+.loading { text-align: center; padding: 40px; color: #8b949e; }
+.spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid #1f2a3c; border-top: 3px solid #58a6ff; border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.recommendations { background: #0d1117; border: 1px solid #1f2a3c; border-radius: 8px; padding: 16px; }
+.recommendations ul { list-style: none; }
+.recommendations li { padding: 8px 0; border-bottom: 1px solid #161b26; font-size: 13px; }
+.recommendations li:last-child { border-bottom: none; }
+
+.footer { text-align: center; padding: 30px; color: #484f58; font-size: 12px; border-top: 1px solid #1f2a3c; }
+a { color: #58a6ff; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1><span class="shield">🛡️</span> SerpShield</h1>
+  <div class="tagline">AI Threat Intelligence Agent — Real-Time Security Signals from Search Data</div>
+  <div class="badges">
+    <span class="badge serpapi">Powered by SerpApi</span>
+    <span class="badge">MCP-Compatible Tools</span>
+    <span id="mode-badge" class="badge demo">DEMO MODE</span>
+  </div>
+</div>
+
+<div class="container">
+  <div class="section">
+    <h2>Agent Status</h2>
+    <div class="status-grid">
+      <div class="stat-card">
+        <div class="label">Status</div>
+        <div class="value" style="color:#3fb950">Online</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Data Source</div>
+        <div class="value" style="font-size:16px" id="data-source">SerpApi (Demo)</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">MCP Tools</div>
+        <div class="value">5</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Threats Detected</div>
+        <div class="value" id="threat-count">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Run Threat Scan</h2>
+    <div class="input-group">
+      <input type="text" id="target-input" placeholder="Enter a brand, technology, or DeFi protocol name..." value="OpenAI">
+      <button class="btn" id="scan-btn" onclick="runScan()">Scan Threats</button>
+    </div>
+    <div id="scan-results"></div>
+  </div>
+
+  <div class="section">
+    <h2>MCP Tools</h2>
+    <div class="tools-list" id="tools-list"></div>
+  </div>
+
+  <div class="section">
+    <h2>Quick Demo</h2>
+    <p style="color:#8b949e;margin-bottom:12px;">Run the full autonomous monitoring cycle (the judge demo flow):</p>
+    <button class="btn" onclick="runDemo()">Run Full Demo Cycle</button>
+    <div id="demo-results" style="margin-top:16px"></div>
+  </div>
+</div>
+
+<div class="footer">
+  SerpShield — Built for DevNetwork [API + Cloud + AI] Hackathon 2026 · SerpApi Track · <a href="https://github.com/0xConsole/serpshield">GitHub</a>
+</div>
+
+<script>
+const API = '';
+let threatCount = 0;
+
+async function fetchJSON(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  return resp.json();
+}
+
+async function init() {
+  try {
+    const status = await fetchJSON('/api/agent/status');
+    const health = await fetchJSON('/api/health');
+    document.getElementById('data-source').textContent = health.serpapi_mode.includes('LIVE') ? 'SerpApi (LIVE)' : 'SerpApi (Demo)';
+    document.getElementById('mode-badge').className = health.serpapi_mode.includes('LIVE') ? 'badge live' : 'badge demo';
+    document.getElementById('mode-badge').textContent = health.serpapi_mode.includes('LIVE') ? 'LIVE DATA' : 'DEMO MODE';
+
+    // Render tools
+    const toolsList = document.getElementById('tools-list');
+    const mcpTools = await fetchJSON('/api/mcp/tools');
+    mcpTools.tools.forEach(tool => {
+      const div = document.createElement('div');
+      div.className = 'tool-card';
+      div.innerHTML = `<div class="name">${tool.name}</div><div class="desc">${tool.description}</div>`;
+      toolsList.appendChild(div);
+    });
+  } catch (e) {
+    console.error('Init error:', e);
+  }
+}
+
+async function runScan() {
+  const target = document.getElementById('target-input').value || 'OpenAI';
+  const btn = document.getElementById('scan-btn');
+  const results = document.getElementById('scan-results');
+  btn.disabled = true;
+  results.innerHTML = '<div class="loading"><div class="spinner"></div><p style="margin-top:12px">Scanning for threats...</p></div>';
+  try {
+    const report = await fetchJSON(`/api/tools/generate_threat_report?target=${encodeURIComponent(target)}`);
+    renderReport(report.report, results);
+    threatCount += (report.report.signals || []).length;
+    document.getElementById('threat-count').textContent = threatCount;
+  } catch (e) {
+    results.innerHTML = `<div class="signal-card"><div class="title">Error: ${e.message}</div></div>`;
+  }
+  btn.disabled = false;
+}
+
+function renderReport(report, container) {
+  if (!report || !report.signals || report.signals.length === 0) {
+    container.innerHTML = '<div class="signal-card"><div class="title">No threats detected. ✅</div></div>';
+    return;
+  }
+  const score = report.threat_score || 0;
+  const scoreClass = score > 60 ? 'threat-score' : (score > 30 ? 'threat-score medium' : 'threat-score low');
+  let html = `<div class="stat-card" style="margin-bottom:16px">
+    <div class="label">Threat Score for "${report.target}"</div>
+    <div class="value ${scoreClass}">${score}/100</div>
+    <div style="font-size:13px;color:#8b949e;margin-top:8px">${report.summary}</div>
+  </div>`;
+  html += '<div class="results">';
+  report.signals.forEach(sig => {
+    html += `<div class="signal-card">
+      <div class="header-line">
+        <span class="type type-${sig.severity}">${sig.severity} · ${sig.threat_type}</span>
+        <span style="font-size:11px;color:#484f58">${Math.round(sig.confidence*100)}% confidence</span>
+      </div>
+      <div class="title">${sig.title}</div>
+      <div class="snippet">${sig.snippet}</div>
+      <div class="url"><a href="${sig.url}" target="_blank">${sig.url}</a></div>
+    </div>`;
+  });
+  html += '</div>';
+  if (report.recommendations && report.recommendations.length > 0) {
+    html += '<div class="recommendations" style="margin-top:16px"><h3 style="margin-bottom:8px;color:#c9d1d9">Recommendations</h3><ul>';
+    report.recommendations.forEach(r => { html += `<li>→ ${r}</li>`; });
+    html += '</ul></div>';
+  }
+  container.innerHTML = html;
+}
+
+async function runDemo() {
+  const results = document.getElementById('demo-results');
+  results.innerHTML = '<div class="loading"><div class="spinner"></div><p style="margin-top:12px">Running full monitoring cycle...</p></div>';
+  try {
+    const demo = await fetchJSON('/api/demo');
+    const report = demo.result.report;
+    renderReport(report, results);
+    threatCount += (report.signals || []).length;
+    document.getElementById('threat-count').textContent = threatCount;
+  } catch (e) {
+    results.innerHTML = `<div class="signal-card"><div class="title">Error: ${e.message}</div></div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
