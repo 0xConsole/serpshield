@@ -122,10 +122,10 @@ def _mock_search_results(query: str) -> dict:
 # ---------- Threat Analysis ----------
 
 THREAT_KEYWORDS = {
-    "vulnerability": ["vulnerability", "exploit", "CVE", "unpatched", "0-day", "overflow", "reentrancy", "audit"],
-    "phishing": ["phishing", "scam", "fake", "lookalike", "impersonation", "credential", "fake login"],
     "defi_risk": ["rug pull", "rug", "drained", "exit scam", "liquidity removed", "flash loan attack", "MEV"],
     "impersonation": ["impersonation", "fake account", "scam account", "impersonating"],
+    "phishing": ["phishing", "scam", "fake login", "lookalike", "credential"],
+    "vulnerability": ["vulnerability", "exploit", "CVE", "unpatched", "0-day", "overflow", "reentrancy", "audit"],
     "reputation": ["negative sentiment", "backlash", "controversy", "complaint", "fraud alert"],
 }
 
